@@ -1,5 +1,4 @@
 
-
 //Made by Cody McClintock
 //Used with the Kuka Youbot to take user input and 
 //serve bottled soda to students for EOH 2017
@@ -25,6 +24,7 @@ char keyboard_input = 'z';
 char compare = 'y';
 int cnt = 0;
 
+//These are the global variables we are getting from the object_detection.py code
 int Pepsi_x_cent = 0;
 int Pepsi_y_cent = 0;
 int DietMTD_x_cent = 0;
@@ -42,19 +42,18 @@ void user_input();
 void moveGripper();
 
 
-//The following is setting up the brics actuator so we can move the youbot arm
-//and gripper
-
 
 // create a brics actuator message with the given joint position values
-brics_actuator::JointPositions createArmPositionCommand(std::vector<double>& newPositions) {
+brics_actuator::JointPositions createArmPositionCommand(std::vector<double>& newPositions) 
+{
 	int numberOfJoints = 5;
 	brics_actuator::JointPositions msg;
 
 	if (newPositions.size() < numberOfJoints)
 		return msg; // return empty message if not enough values provided
 
-	for (int i = 0; i < numberOfJoints; i++) {
+	for (int i = 0; i < numberOfJoints; i++) 
+	{
 		// Set all values for one joint, i.e. time, name, value and unit
 		brics_actuator::JointValue joint;
 		joint.timeStamp = ros::Time::now();
@@ -73,8 +72,10 @@ brics_actuator::JointPositions createArmPositionCommand(std::vector<double>& new
 	return msg;
 }
 
+
 // create a brics actuator message for the gripper using the same position for both fingers
-brics_actuator::JointPositions createGripperPositionCommand(double newPosition) {
+brics_actuator::JointPositions createGripperPositionCommand(double newPosition) 
+{
 	brics_actuator::JointPositions msg;
 
 	brics_actuator::JointValue joint;
@@ -96,6 +97,7 @@ void centroidsCallback(const youbot_ros_hello_world::Num::ConstPtr& msg)
 	
 	cout<<"test1\n\n\n\n\n";
 
+	//setting the global variables to the 
 	Pepsi_x_cent = msg->Pepsi_x;
 	Pepsi_y_cent = msg->Pepsi_y;
 
@@ -112,8 +114,6 @@ void centroidsCallback(const youbot_ros_hello_world::Num::ConstPtr& msg)
 
 
 
-
-///////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) 
 {
 	cout<<"test4\n\n\n";
@@ -130,7 +130,8 @@ int main(int argc, char **argv)
 	brics_actuator::JointPositions msg;
 	std::vector<double> jointvalues(5);
 
-//Moves the arm to our home position 
+				       
+//Moves the arm to our home position |*-*- position
 	jointvalues[0] = 2.95;
 	jointvalues[1] = 1.12;
 	jointvalues[2] = -4.144;
@@ -156,11 +157,49 @@ int main(int argc, char **argv)
 
 
 
+//get user function
+void user_input() 
+{
+//for the base
+	geometry_msgs::Twist twist;
 
-/////////////////////////////////////////////////////////////////////////
+//for the arm
+	brics_actuator::JointPositions msg;
+	std::vector<double> jointvalues(5);
+
+
+	cout << "Which soda would you like?\n";
+	cout << "Press 'd' for Diet\n";
+	cout << "Press 's' for Sprite\n";
+	cout << "Press 'o' for Orange Fanta\n";
+   	cout << "Press 'm' for Mt. Dew\n\n";
+	cout << "Press 'f' for Forward Kinematics\n";
+
+//makes sure the youbot is stopped 
+    twist.linear.x = 0;
+	twist.linear.y = 0;	
+	twist.angular.z = 0;
+    platformPublisher.publish(twist);
+
+	
+	cin >> keyboard_input;
+
+	if(keyboard_input =='f')
+	{
+		forward_kin();
+	}
+
+	else(retrieve_drink());
+
+
+}
+
+
+
+
 void retrieve_drink()
 {
-	//for the base
+	//setup for the base
 	geometry_msgs::Twist twist;
 
 	//setup the arm joints	
@@ -187,7 +226,7 @@ void retrieve_drink()
 	//	These bottles will be to the left of the youbot
 
 	//Setting to desired angles with reference to our home position
-	//	Will make the arm the height of the bottle 
+	//Will make the arm the height of the bottle 
 	float xinc = 0.0;
 	float yinc = -0.1;
 
@@ -347,6 +386,7 @@ void retrieve_drink()
 				yinc += 0.05;
 			}
 
+			//publish the info to move the base of the youbot
 			twist.linear.x = xinc;
 	   		twist.linear.y = yinc;
 			platformPublisher.publish(twist);
@@ -369,7 +409,7 @@ void retrieve_drink()
 
 
 
-///////////////////////////////////////////////////////////////////////
+//used to tell the youbot where to move in reference to our home position 
 void forward_kin()
 {
 	//for the base
@@ -407,171 +447,5 @@ void forward_kin()
 		armPublisher.publish(msg);
 
 }
-
-
-
-///////////////////////////////////////////////////////////////////////
-//get user function
-void user_input() 
-{
-//for the base
-	geometry_msgs::Twist twist;
-
-//for the arm
-	brics_actuator::JointPositions msg;
-	std::vector<double> jointvalues(5);
-
-
-	cout << "Which soda would you like?\n";
-	cout << "Press 'd' for Diet\n";
-	cout << "Press 's' for Sprite\n";
-	cout << "Press 'o' for Orange Fanta\n";
-   	cout << "Press 'm' for Mt. Dew\n\n";
-	cout << "Press 'f' for Forward Kinematics\n";
-
-    twist.linear.x = 0;
-	twist.linear.y = 0;	
-	twist.angular.z = 0;
-    platformPublisher.publish(twist);
-
-	
-	cin >> keyboard_input;
-
-	if(keyboard_input =='f')
-	{
-		forward_kin();
-	}
-
-	else(retrieve_drink());
-
-/*
-	switch(keyboard_input)
-	{
-//cases depending on input
-
-		case 'd':
-			{
-				twist.linear.x = 0.5;
-				twist.linear.y = 0.0;
-				platformPublisher.publish(twist);
-				ros::Duration(1).sleep();
-				break;
-			}
-
-
-		case 's':
-			{
-				twist.linear.x = -0.5;
-               	twist.linear.y = 0.5;
-				platformPublisher.publish(twist);
-				ros::Duration(1).sleep();
-				break;
-			}
-
-
-		case 'm':
-			{
-				twist.linear.x = 0;
-               	twist.linear.y = -0.5;
-				platformPublisher.publish(twist);
-				ros::Duration(1).sleep();
-				break;
-			}
-
-
-
-
-		case 'f':
-			{
-				forward_kin();
-			}
-
-	}
-*/
-}
-
-/*
-	// forward
-	twist.linear.x = 0.05;  // with 0.05 m per sec
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// backward
-	twist.linear.x = -0.05;
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// to the left
-	twist.linear.x = 0;
-	twist.linear.y = 0.05;
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// to the right
-	twist.linear.y = -0.05;
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// stop
-	twist.linear.y = 0;
-	platformPublisher.publish(twist);
-}
-*/
-
-
-
-/*
-// move platform a little bit back- and forward and to the left and right
-void movePlatform() {
-	geometry_msgs::Twist twist;
-
-	// forward
-	twist.linear.x = 0.05;  // with 0.05 m per sec
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// backward
-	twist.linear.x = -0.05;
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// to the left
-	twist.linear.x = 0;
-	twist.linear.y = 0.05;
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// to the right
-	twist.linear.y = -0.05;
-	platformPublisher.publish(twist);
-	ros::Duration(2).sleep();
-
-	// stop
-	twist.linear.y = 0;
-	platformPublisher.publish(twist);
-}
-*/
-
-
-
-///////////////////////////////////////////////////////////////////////
-// open and close gripper
-void moveGripper() {
-	brics_actuator::JointPositions msg;
-	
-	// open gripper
-	msg = createGripperPositionCommand(0.011);
-	gripperPublisher.publish(msg);
-
-	ros::Duration(3).sleep();
-
-	// close gripper
-	msg = createGripperPositionCommand(0);
-	gripperPublisher.publish(msg);
-}
-
-
-
-
 
 
